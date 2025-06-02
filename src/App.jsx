@@ -1,35 +1,61 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import LoginPage from './pages/Auth/LoginPage';
+// import RegisterPage from './pages/Auth/RegisterPage'; // Akan kita buat
+
+// Placeholder untuk halaman yang dilindungi
+const ProtectedRoute = () => {
+  const token = localStorage.getItem('authToken');
+  // Di sini Anda bisa menambahkan logika verifikasi token jika perlu
+  if (!token) {
+    return <Navigate to="/login" replace />;
+  }
+  return <Outlet />; // Outlet merender child route dari ProtectedRoute
+};
+
+// Placeholder untuk halaman dashboard
+const DashboardPage = () => (
+    <div className="p-4">
+        <h1 className="text-2xl mb-4">Welcome to PasargameX Dashboard!</h1>
+        <p className="mb-4">Ini adalah halaman dashboard sederhana setelah Anda berhasil login.</p>
+        <button 
+            onClick={() => { 
+                localStorage.removeItem('authToken');
+                localStorage.removeItem('refreshToken');
+                localStorage.removeItem('userData');
+                window.location.href = '/login'; 
+            }}
+            className="bg-pgx-red hover:bg-pgx-red/90 text-white font-bold py-2 px-4 rounded"
+        >
+            Logout
+        </button>
+    </div>
+);
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <Router>
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        {/* <Route path="/register" element={<RegisterPage />} /> */}
+        
+        {/* Rute yang dilindungi */}
+        <Route element={<ProtectedRoute />}>
+          <Route path="/dashboard" element={<DashboardPage />} />
+          {/* Tambahkan rute terproteksi lainnya di sini */}
+        </Route>
+        
+        {/* Redirect default ke login jika tidak ada path yang cocok dan tidak ada token */}
+        {/* Atau ke dashboard jika ada token */}
+        <Route 
+          path="/" 
+          element={localStorage.getItem('authToken') ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />} 
+        />
+        {/* Tambahkan halaman 404 nanti */}
+        {/* <Route path="*" element={<NotFoundPage />} /> */}
+      </Routes>
+    </Router>
+  );
 }
 
-export default App
+export default App;
